@@ -1,63 +1,47 @@
 package com.a1922is_tamagotchi;
-
-import android.os.StrictMode;
-import android.util.Log;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.a1922is_tamagotchi.interfaces.consumirApi;
+import com.a1922is_tamagotchi.model.mascota;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class consumoApi {
-    private String direccion = "https://pokeapi.co/api/v2/pokemon?limit=3";
-    private String inputLine, JSON = "";
-    public String mensaje = "";
-    private StringBuffer respuesta = new StringBuffer();
-    private StrictMode.ThreadPolicy test = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-    private URL url = null;
-    private HttpURLConnection conexion;
-    private BufferedReader in;
+    public static String URL = "https://jsonplaceholder.typicode.com/";
+    public static Retrofit varRetro;
 
-    public String accederApi(String metodo, String atributo, String resultados) {
-        StrictMode.setThreadPolicy(test);
-        try {
-            url = new URL(direccion);
-            conexion = (HttpURLConnection) url.openConnection();
-            conexion.setRequestMethod(metodo);
-            conexion.connect();
+    public void buscar(String codigo) {
+        if (varRetro == null) {
+            varRetro = new Retrofit.Builder().baseUrl(URL)
+                    .addConverterFactory(GsonConverterFactory.create()).build();
+            consumirApi consApi = varRetro.create(consumirApi.class);
 
-            if(metodo.equals("GET")){
-                in = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
-                while ((inputLine = in.readLine()) != null) {
-                    respuesta.append(inputLine);
+
+            Call<mascota> call = consApi.find(codigo);
+            call.enqueue(new Callback<mascota>() {
+                @Override
+                public void onResponse(Call<mascota> call, Response<mascota> response) {
+                    try {
+                        if (response.isSuccessful()) {
+                            mascota m = response.body();
+                            System.out.println(call);
+                            System.out.println(m.getName());
+                            System.out.println(m.getId());
+
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("UWUn't " + ex);
+                    }
                 }
-                JSON = respuesta.toString();
-                JSONObject objetoJSON = new JSONObject(JSON);
-                JSONArray arregloJSON = objetoJSON.getJSONArray(resultados);
-                for (int i = 0; i < arregloJSON.length(); i++) {
-                    JSONObject explrObject = arregloJSON.getJSONObject(i);
-                    mensaje += atributo + " " + explrObject.optString(atributo) + "\n";
-                }
-            } else if (metodo.equals(("POST"))){
-                mensaje="CTM";
-            }
 
-            return mensaje;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return "ERROR URL";
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "ERROR IO";
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return "ERROR JSON";
+                @Override
+                public void onFailure(Call<mascota> call, Throwable t) {
+
+                }
+            });
         }
     }
-
 }
